@@ -116,11 +116,11 @@ if st.button('Run'):
             col1.metric("Time", formatted_hour)
             col2.metric("Traffic Volume", int(traffic_volume))
             col3.metric("Toll Rate", round(predicted_rate, 2))
-            time.sleep(0.7)  # Simulate dynamic change
+            time.sleep(1)  # Simulate dynamic change
 
-    # Display the results directly
-    st.subheader("Predicted and Adjusted Rates Over 24 Hours")
-    for result in results:
-        st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: ${result['Predicted Rate']}")
+    # Commenting out the display of all results at the end
+    # st.subheader("Predicted and Adjusted Rates Over 24 Hours")
+    # for result in results:
+    #     st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: ${result['Predicted Rate']}")
 else:
     st.markdown("</div>", unsafe_allow_html=True)
