@@ -115,7 +115,7 @@ if st.button('Run'):
             col1.metric("Time", formatted_time)
             col2.metric("Traffic Volume", int(traffic_volume))
             col3.metric("Toll Rate", round(predicted_rate, 2))
-            time.sleep(1)  # Simulate dynamic change
+            time.sleep(0.7)  # Simulate dynamic change
 
     # Display completion message
     st.success("Completed!!!")
