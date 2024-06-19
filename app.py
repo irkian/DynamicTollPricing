@@ -104,7 +104,7 @@ if st.button('Run'):
             col1.metric("Time", formatted_hour)
             col2.metric("Traffic Volume", int(traffic_volume))
             col3.metric("Toll Rate", round(predicted_rate, 2))
-            time.sleep(0.5)  # Simulate dynamic change
+            time.sleep(1)  # Simulate dynamic change
 
     # Display the results directly
     st.subheader("Predicted and Adjusted Rates Over 24 Hours")
