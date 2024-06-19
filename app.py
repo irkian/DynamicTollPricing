@@ -64,13 +64,13 @@ def predict_with_original_values(direction, start_point, end_point, traffic_volu
     prediction = model.predict(input_array)
     return prediction[0]
 
-# Function to format the hour in 12-hour format with AM/PM
-def format_hour(hour):
+# Function to format the hour and minute in 12-hour format with AM/PM
+def format_hour_minute(hour, minute):
     hour_12 = hour % 12
     if hour_12 == 0:
         hour_12 = 12
     period = "AM" if hour < 12 else "PM"
-    return f"{hour_12} {period}"
+    return f"{hour_12}:{minute:02d} {period}"
 
 # Streamlit App
 st.title("Dynamic Toll Pricing")
@@ -95,16 +95,15 @@ if st.button('Run'):
 
     for minute in range(0, 1440, 15):  # 1440 minutes in a day, 15-minute intervals
         hour = minute // 60
-        formatted_hour = format_hour(hour)
+        formatted_time = format_hour_minute(hour, minute % 60)
         predicted_rate = predict_with_original_values(direction, start_point, end_point, int(traffic_volume), hour, day_of_week)
         
-
         # Adjust traffic volume based on the predicted rate and keep it within the specified ranges
         traffic_volume = get_traffic_volume(hour)
 
         # Append the results to the list
         results.append({
-            'Time': formatted_hour,
+            'Time': formatted_time,
             'Traffic Volume': int(traffic_volume),
             'Predicted Rate': round(predicted_rate, 2)
         })
@@ -113,10 +112,13 @@ if st.button('Run'):
         with placeholder.container():
             st.subheader("Dynamic Prediction")
             col1, col2, col3 = st.columns(3)
-            col1.metric("Time", formatted_hour)
+            col1.metric("Time", formatted_time)
             col2.metric("Traffic Volume", int(traffic_volume))
             col3.metric("Toll Rate", round(predicted_rate, 2))
             time.sleep(1)  # Simulate dynamic change
+
+    # Display completion message
+    st.success("Completed!!!")
 
     # Commenting out the display of all results at the end
     # st.subheader("Predicted and Adjusted Rates Over 24 Hours")
