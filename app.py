@@ -104,12 +104,12 @@
 #             col1.metric("Time", formatted_hour)
 #             col2.metric("Traffic Volume", int(traffic_volume))
 #             col3.metric("Toll Rate", round(predicted_rate, 2))
-#             time.sleep(1)  # Simulate dynamic change
+#             time.sleep(0.7)  # Simulate dynamic change
 
 #     # Display the results directly
 #     st.subheader("Predicted and Adjusted Rates Over 24 Hours")
 #     for result in results:
-#         st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: {result['Predicted Rate']}")
+#         st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: ${result['Predicted Rate']}")
 # else:
 #     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -118,18 +118,22 @@ import pandas as pd
 import numpy as np
 import pickle
 import time
-import sklearn
+from sklearn.exceptions import NotFittedError
 
 # Load the model and encoders
-with open('model.pkl', 'rb') as f:
-    model = pickle.load(f)
-with open('encoders.pkl', 'rb') as f:
-    encoders = pickle.load(f)
+try:
+    with open('model.pkl', 'rb') as f:
+        model = pickle.load(f)
+    with open('encoders.pkl', 'rb') as f:
+        encoders = pickle.load(f)
+except (FileNotFoundError, pickle.UnpicklingError) as e:
+    st.error(f"Error loading model or encoders: {e}")
+    st.stop()
 
 # Define a mapping for direction labels based on encoder's classes
 direction_mapping = {
-    'Northbound': encoders['direction'].classes_[0],  # Change [0] if necessary
-    'Southbound': encoders['direction'].classes_[1]   # Change [1] if necessary
+    'Northbound': encoders['direction'].classes_[0],
+    'Southbound': encoders['direction'].classes_[1]
 }
 
 # Mapping for day of week
@@ -154,18 +158,34 @@ def get_traffic_volume(hour):
 
 # Function to make predictions with original values
 def predict_with_original_values(direction, start_point, end_point, traffic_volume, hour, day_of_week):
-    # Map and encode the input values
-    direction_encoded = encoders['direction'].transform([direction_mapping[direction]])[0]
-    start_point_encoded = encoders['start_point'].transform([start_point])[0]
-    end_point_encoded = encoders['end_point'].transform([end_point])[0]
-    day_of_week_encoded = day_of_week_mapping[day_of_week]
+    try:
+        # Map and encode the input values
+        direction_encoded = encoders['direction'].transform([direction_mapping[direction]])[0]
+        start_point_encoded = encoders['start_point'].transform([start_point])[0]
+        end_point_encoded = encoders['end_point'].transform([end_point])[0]
+        day_of_week_encoded = day_of_week_mapping[day_of_week]
 
-    # Create the input array
-    input_array = [[direction_encoded, start_point_encoded, end_point_encoded, traffic_volume, hour, day_of_week_encoded]]
+        # Create the input array
+        input_array = [[direction_encoded, start_point_encoded, end_point_encoded, traffic_volume, hour, day_of_week_encoded]]
 
-    # Make prediction
-    prediction = model.predict(input_array)
-    return prediction[0]
+        # Make prediction
+        prediction = model.predict(input_array)
+        predicted_rate = prediction[0]
+
+        # Adjust the toll rate based on traffic volume
+        if traffic_volume <= 200:
+            adjusted_rate = 1.00 + 0.50 * (traffic_volume / 200)
+        elif traffic_volume <= 400:
+            adjusted_rate = 1.50 + 0.75 * ((traffic_volume - 200) / 200)
+        elif traffic_volume <= 600:
+            adjusted_rate = 2.25 + 1.00 * ((traffic_volume - 400) / 200)
+        else:
+            adjusted_rate = 3.25 + 1.50 * ((traffic_volume - 600) / 200)
+
+        return adjusted_rate
+    except (NotFittedError, ValueError) as e:
+        st.error(f"Prediction error: {e}")
+        return None
 
 # Function to format the hour in 12-hour format with AM/PM
 def format_hour(hour):
@@ -196,38 +216,37 @@ if st.button('Run'):
     # Initial traffic volume
     traffic_volume = get_traffic_volume(0)  # Starting with initial traffic volume
 
-    for minute in range(0, 1440, 15):  # 1440 minutes in a day, 15-minute intervals
+    for minute in range(0, 1440, 30):  # 1440 minutes in a day, 30-minute intervals
         hour = minute // 60
         formatted_hour = format_hour(hour)
-        predicted_rate = predict_with_original_values(direction, start_point, end_point, int(traffic_volume), hour, day_of_week)
+        adjusted_rate = predict_with_original_values(direction, start_point, end_point, int(traffic_volume), hour, day_of_week)
         
+        if adjusted_rate is not None:
+            # Adjust traffic volume based on the predicted rate and keep it within the specified ranges
+            traffic_volume = get_traffic_volume(hour)
 
-        # Adjust traffic volume based on the predicted rate and keep it within the specified ranges
-        traffic_volume = get_traffic_volume(hour)
+            # Append the results to the list
+            results.append({
+                'Time': formatted_hour,
+                'Traffic Volume': int(traffic_volume),
+                'Toll Rate': round(adjusted_rate, 2)
+            })
 
-        # Append the results to the list
-        results.append({
-            'Time': formatted_hour,
-            'Traffic Volume': int(traffic_volume),
-            'Predicted Rate': round(predicted_rate, 2)
-        })
-
-        # Update dynamic display
-        with placeholder.container():
-            st.subheader("Dynamic Prediction")
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Time", formatted_hour)
-            col2.metric("Traffic Volume", int(traffic_volume))
-            col3.metric("Toll Rate", round(predicted_rate, 2))
-            time.sleep(0.7)  # Simulate dynamic change
+            # Update dynamic display
+            with placeholder.container():
+                st.subheader("Dynamic Prediction")
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Time", formatted_hour)
+                col2.metric("Traffic Volume", int(traffic_volume))
+                col3.metric("Toll Rate", round(adjusted_rate, 2))
+                time.sleep(0.5)  # Simulate dynamic change
 
     # Display the results directly
     st.subheader("Predicted and Adjusted Rates Over 24 Hours")
     for result in results:
-        st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: ${result['Predicted Rate']}")
+        st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: {result['Toll Rate']}")
 else:
     st.markdown("</div>", unsafe_allow_html=True)
-
 
 
 
