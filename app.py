@@ -196,7 +196,7 @@ if st.button('Run'):
     # Initial traffic volume
     traffic_volume = get_traffic_volume(0)  # Starting with initial traffic volume
 
-    for minute in range(0, 1440, 60):  # 1440 minutes in a day, 30-minute intervals
+    for minute in range(0, 1440, 15):  # 1440 minutes in a day, 15-minute intervals
         hour = minute // 60
         formatted_hour = format_hour(hour)
         predicted_rate = predict_with_original_values(direction, start_point, end_point, int(traffic_volume), hour, day_of_week)
@@ -219,7 +219,7 @@ if st.button('Run'):
             col1.metric("Time", formatted_hour)
             col2.metric("Traffic Volume", int(traffic_volume))
             col3.metric("Toll Rate", round(predicted_rate, 2))
-            time.sleep(1)  # Simulate dynamic change
+            time.sleep(0.7)  # Simulate dynamic change
 
     # Display the results directly
     st.subheader("Predicted and Adjusted Rates Over 24 Hours")
