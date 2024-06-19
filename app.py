@@ -5,6 +5,18 @@ import pickle
 import time
 import sklearn
 
+# Custom CSS to hide the GitHub logo and other unwanted elements
+st.markdown(
+    """
+    <style>
+    .css-1y0tads, .css-1rs6os.edgvbvh3, .css-1rs6os {
+        display: none;
+    }
+    </style>
+    """, 
+    unsafe_allow_html=True
+)
+
 # Load the model and encoders
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
@@ -112,5 +124,3 @@ if st.button('Run'):
         st.write(f"Time: {result['Time']}, Traffic Volume: {result['Traffic Volume']}, Toll Rate: ${result['Predicted Rate']}")
 else:
     st.markdown("</div>", unsafe_allow_html=True)
-
-
