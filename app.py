@@ -118,7 +118,7 @@ import pandas as pd
 import numpy as np
 import pickle
 import time
-import plotly.express as px
+import matplotlib.pyplot as plt
 
 # Load the model and encoders
 with open('model.pkl', 'rb') as f:
@@ -223,16 +223,25 @@ if st.button('Run'):
     # Convert results to DataFrame
     df = pd.DataFrame(results)
 
-    # Plot graphs using Plotly
+    # Plot graphs using Matplotlib
     st.subheader("Change of Toll Price Over Time")
-    fig1 = px.line(df, x='Time', y='Predicted Rate', title='Change of Toll Price Over Time', line_shape='linear')
-    fig1.update_traces(line_color='red')
-    st.plotly_chart(fig1)
+    plt.figure(figsize=(10, 5))
+    plt.plot(df['Time'], df['Predicted Rate'], color='red')
+    plt.xlabel('Time')
+    plt.ylabel('Toll Price')
+    plt.title('Change of Toll Price Over Time')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(plt)
 
     st.subheader("Change of Traffic Volume Over Time")
-    fig2 = px.line(df, x='Time', y='Traffic Volume', title='Change of Traffic Volume Over Time', line_shape='linear')
-    fig2.update_traces(line_color='green')
-    st.plotly_chart(fig2)
+    plt.figure(figsize=(10, 5))
+    plt.plot(df['Time'], df['Traffic Volume'], color='green')
+    plt.xlabel('Time')
+    plt.ylabel('Traffic Volume')
+    plt.title('Change of Traffic Volume Over Time')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(plt)
 else:
     st.markdown("</div>", unsafe_allow_html=True)
-
